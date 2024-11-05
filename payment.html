@@ -33,12 +33,15 @@
             // Get the token and invoice ID from the hidden fields
             var token = document.getElementById('mytoken').value;
             var invoiceId = document.getElementById('invoiceId').value;
-            
+
+            console.log("Token:", token);  // Debugging
+            console.log("Invoice ID:", invoiceId);  // Debugging
+
             if (!token) {
                 alert("Token is not available. Please ensure the iframe is properly loaded.");
                 return;
             }
-            
+
             if (!invoiceId) {
                 alert("Invoice ID is missing.");
                 return;
@@ -72,8 +75,11 @@
         // Extract and store the invoice ID from the URL query parameter
         window.onload = function() {
             var invoiceId = getUrlParameter('invoiceId');
+            console.log("Invoice ID from URL:", invoiceId);  // Log for debugging
+
             if (invoiceId) {
                 document.getElementById('invoiceId').value = invoiceId;
+                console.log("Invoice ID assigned to hidden input:", document.getElementById('invoiceId').value);
             } else {
                 console.error("Invoice ID not found in URL.");
             }
