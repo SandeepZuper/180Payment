@@ -1,0 +1,102 @@
+<html>
+<head>
+    <script language="JavaScript">
+        // Function to get a parameter value from the URL
+        function getUrlParameter(name) {
+            var urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(name);
+        }
+
+        // Listen for the message from the iframe
+        window.addEventListener('message', function(event) {
+            try {
+                // Ensure the message comes from the Fiserv iframe's domain
+                if (event.origin !== "https://fts-uat.cardconnect.com") {
+                    console.error("Invalid origin: " + event.origin);
+                    return;
+                }
+
+                // Parse the token message received from the iframe
+                var token = JSON.parse(event.data);
+                if (token && token.message) {
+                    // Store the token in a hidden input field
+                    var mytoken = document.getElementById('mytoken');
+                    mytoken.value = token.message;
+                }
+            } catch (error) {
+                console.error("Error parsing token: ", error);
+            }
+        }, false);
+
+        // Function to submit the form to the webhook
+        function submitToWebhook() {
+            // Get the token and invoice ID from the hidden fields
+            var token = document.getElementById('mytoken').value;
+            var invoiceId = document.getElementById('invoiceId').value;
+            
+            if (!token) {
+                alert("Token is not available. Please ensure the iframe is properly loaded.");
+                return;
+            }
+            
+            if (!invoiceId) {
+                alert("Invoice ID is missing.");
+                return;
+            }
+
+            // Data to send in the POST request
+            var data = {
+                token: token,
+                invoiceId: invoiceId  // Include the invoice ID in the data sent to the webhook
+            };
+
+            // Perform the POST request to the webhook
+            fetch("https://internalwf-sandbox.zuper.co/webhook/0438eddc-d897-4a67-b4c4-3dbb87c82781", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(responseData => {
+                console.log("Webhook response:", responseData);
+                alert("Webhook called successfully.");
+            })
+            .catch(error => {
+                console.error("Error calling webhook:", error);
+                alert("Error submitting data to webhook.");
+            });
+        }
+
+        // Extract and store the invoice ID from the URL query parameter
+        window.onload = function() {
+            var invoiceId = getUrlParameter('invoiceId');
+            if (invoiceId) {
+                document.getElementById('invoiceId').value = invoiceId;
+            } else {
+                console.error("Invoice ID not found in URL.");
+            }
+        };
+    </script>
+</head>
+<body>
+    <h1>Fiserv Tokenization Form</h1>
+    
+    <form name="tokenform" id="tokenform">
+        <!-- Embed the Fiserv iframe for tokenization -->
+        <iframe id="tokenFrame" name="tokenFrame" src="https://fts-uat.cardconnect.com/itoke/ajax-tokenizer.html?useexpiry=true&usecvv=true" frameborder="0" scrolling="no" width="400" height="150"></iframe>
+        
+        <!-- Hidden field to store the generated token -->
+        <input type="hidden" name="mytoken" id="mytoken"/>
+        
+        <!-- Hidden field to store the Zuper invoice ID -->
+        <input type="hidden" name="invoiceId" id="invoiceId"/>
+        
+        <br><br>
+        
+        <!-- Button to trigger the webhook -->
+        <button type="button" onclick="submitToWebhook()">Submit</button>
+    </form>
+</body>
+</html>
