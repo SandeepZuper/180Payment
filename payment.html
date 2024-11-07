@@ -4,7 +4,7 @@
         // Function to get a parameter value from the URL
         function getUrlParameter(name) {
             var urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);
+            return urlParams.get(name);  // Return the value of the parameter
         }
 
         // Listen for the message from the iframe
@@ -95,8 +95,11 @@
                 console.error("Invoice ID not found in URL.");
             }
 
-            // You can choose to store the companyId value if needed (for example in a hidden input field)
-            // But since you're already sending it with the POST request, storing it here is optional
+            if (companyId) {
+                console.log("Company ID extracted successfully");
+            } else {
+                console.error("Company ID not found in URL.");
+            }
         };
     </script>
 </head>
