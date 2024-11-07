@@ -33,9 +33,11 @@
             // Get the token and invoice ID from the hidden fields
             var token = document.getElementById('mytoken').value;
             var invoiceId = document.getElementById('invoiceId').value;
+            var companyId = getUrlParameter('companyId');  // Get companyId from the URL
 
             console.log("Token:", token);  // Debugging
             console.log("Invoice ID:", invoiceId);  // Debugging
+            console.log("Company ID:", companyId);  // Debugging
 
             if (!token) {
                 alert("Token is not available. Please ensure the iframe is properly loaded.");
@@ -47,10 +49,16 @@
                 return;
             }
 
+            if (!companyId) {
+                alert("Company ID is missing.");
+                return;
+            }
+
             // Data to send in the POST request
             var data = {
                 token: token,
-                invoiceId: invoiceId  // Include the invoice ID in the data sent to the webhook
+                invoiceId: invoiceId,  // Include the invoice ID in the data sent to the webhook
+                companyId: companyId   // Include the company ID in the data sent to the webhook
             };
 
             // Perform the POST request to the webhook
@@ -72,10 +80,13 @@
             });
         }
 
-        // Extract and store the invoice ID from the URL query parameter
+        // Extract and store the invoice ID and company ID from the URL query parameters
         window.onload = function() {
             var invoiceId = getUrlParameter('invoiceId');
+            var companyId = getUrlParameter('companyId');
+            
             console.log("Invoice ID from URL:", invoiceId);  // Log for debugging
+            console.log("Company ID from URL:", companyId);  // Log for debugging
 
             if (invoiceId) {
                 document.getElementById('invoiceId').value = invoiceId;
@@ -83,6 +94,9 @@
             } else {
                 console.error("Invoice ID not found in URL.");
             }
+
+            // You can choose to store the companyId value if needed (for example in a hidden input field)
+            // But since you're already sending it with the POST request, storing it here is optional
         };
     </script>
 </head>
