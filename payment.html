@@ -1,52 +1,45 @@
 <html>
 <head>
     <script language="JavaScript">
-        // Function to get a parameter value from the URL
         function getUrlParameter(name) {
             var urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(name);  // Return the value of the parameter
+            return urlParams.get(name);
         }
 
-        // Listen for the message from the iframe (for card payments)
         window.addEventListener('message', function(event) {
             try {
-                // Ensure the message comes from the Fiserv iframe's domain
                 if (event.origin !== "https://fts-uat.cardconnect.com") {
                     console.error("Invalid origin: " + event.origin);
                     return;
                 }
 
-                // Parse the token message received from the iframe
                 var token = JSON.parse(event.data);
                 if (token && token.message) {
-                    // Store the token in a hidden input field
                     var mytoken = document.getElementById('mytoken');
                     mytoken.value = token.message;
-                    console.log("Received token:", mytoken.value); // Debugging
+                    console.log("Received token:", mytoken.value);
                 }
             } catch (error) {
                 console.error("Error parsing token: ", error);
             }
         }, false);
 
-        // Function to submit the form to the webhook
         function submitToWebhook() {
-            // Get the token, routing/account numbers, and invoice ID from the hidden fields or form
-            var token = document.getElementById('mytoken').value;  // Get token from hidden field
+            var token = document.getElementById('mytoken').value;
             var invoiceId = document.getElementById('invoiceId').value;
-            var companyId = getUrlParameter('companyId');  // Get companyId from the URL
-            var saveCard = document.getElementById('saveCard') ? document.getElementById('saveCard').checked : false;  // Get the value of "Save card on file" checkbox
+            var companyId = getUrlParameter('companyId');
+            var saveCard = document.getElementById('saveCard') ? document.getElementById('saveCard').checked : false;
             var routingNumber = document.getElementById('routingNumber') ? document.getElementById('routingNumber').value : '';
             var accountNumber = document.getElementById('accountNumber') ? document.getElementById('accountNumber').value : '';
-            var payType = document.querySelector('input[name="paymentMethod"]:checked') ? document.querySelector('input[name="paymentMethod"]:checked').value : 'cof';  // Get selected payment method (card, ach, or cof)
+            var payType = document.querySelector('input[name="paymentMethod"]:checked') ? document.querySelector('input[name="paymentMethod"]:checked').value : 'cof';
 
-            console.log("Token:", token);  // Debugging
-            console.log("Invoice ID:", invoiceId);  // Debugging
-            console.log("Company ID:", companyId);  // Debugging
-            console.log("Save card on file:", saveCard);  // Debugging
-            console.log("Routing Number:", routingNumber);  // Debugging
-            console.log("Account Number:", accountNumber);  // Debugging
-            console.log("Selected Payment Type:", payType); // Debugging
+            console.log("Token:", token);
+            console.log("Invoice ID:", invoiceId);
+            console.log("Company ID:", companyId);
+            console.log("Save card on file:", saveCard);
+            console.log("Routing Number:", routingNumber);
+            console.log("Account Number:", accountNumber);
+            console.log("Selected Payment Type:", payType);
 
             if (!invoiceId) {
                 alert("Invoice ID is missing.");
@@ -58,23 +51,20 @@
                 return;
             }
 
-            // Prepare data based on the payment method selected
             var data = {
-                invoiceId: invoiceId,  // Include the invoice ID in the data sent to the webhook
-                companyId: companyId,   // Include the company ID in the data sent to the webhook
-                payType: payType       // Include the selected payType in the payload
+                invoiceId: invoiceId,
+                companyId: companyId,
+                payType: payType
             };
 
             if (payType === 'card') {
-                // Card payment selected
                 if (!token) {
                     alert("Card token is required.");
                     return;
                 }
                 data.token = token;
-                data.saveCard = saveCard;  // Include the save card on file checkbox value
+                data.saveCard = saveCard;
             } else if (payType === 'ach') {
-                // ACH payment selected
                 if (!routingNumber || !accountNumber) {
                     alert("Routing number and account number are required for ACH payment.");
                     return;
@@ -82,15 +72,13 @@
                 data.routingNumber = routingNumber;
                 data.accountNumber = accountNumber;
             } else if (payType === 'cof') {
-                // COF payment selected
-                data.amount = 100;  // Add the amount
-                data.surcharge = 3;  // Add the surcharge
+                data.amount = 100;
+                data.surcharge = 3;
             } else {
                 alert("Please select a payment method.");
                 return;
             }
 
-            // Perform the POST request to the webhook
             fetch("https://internalwf.zuper.co/webhook/0438eddc-d897-4a67-b4c4-3dbb87c82781", {
                 method: "POST",
                 headers: {
@@ -109,19 +97,17 @@
             });
         }
 
-        // On page load, check the payment type and toggle the appropriate section
         window.onload = function() {
             var invoiceId = getUrlParameter('invoiceId');
             var companyId = getUrlParameter('companyId');
-            var payType = getUrlParameter('payType');  // Check the payType parameter from URL
+            var payType = getUrlParameter('payType');
 
-            console.log("Invoice ID from URL:", invoiceId);  // Log for debugging
-            console.log("Company ID from URL:", companyId);  // Log for debugging
-            console.log("PayType from URL:", payType);  // Log for debugging
+            console.log("Invoice ID from URL:", invoiceId);
+            console.log("Company ID from URL:", companyId);
+            console.log("PayType from URL:", payType);
 
             if (invoiceId) {
                 document.getElementById('invoiceId').value = invoiceId;
-                console.log("Invoice ID assigned to hidden input:", document.getElementById('invoiceId').value);
             } else {
                 console.error("Invoice ID not found in URL.");
             }
@@ -132,78 +118,59 @@
                 console.error("Company ID not found in URL.");
             }
 
-            // If payType=cof, show the COF flow
             if (payType === 'cof') {
                 showCofFlow();
             } else {
-                // Default to card payment flow if no payType or if it's card/ach
                 togglePaymentMethod('card');
             }
         };
 
-        // Function to toggle the visibility of payment method options
         function togglePaymentMethod(method) {
             if (method === 'card') {
-                // Show card payment options (iframe, checkbox)
                 document.getElementById('cardPaymentSection').style.display = 'block';
                 document.getElementById('saveCardLabel').style.display = 'block';
-                document.getElementById('routingFields').style.display = 'none';  // Hide ACH fields
-                document.getElementById('cofSection').style.display = 'none';  // Hide COF section
-                document.getElementById('paymentButtons').style.display = 'block';  // Show submit button
+                document.getElementById('routingFields').style.display = 'none';
+                document.getElementById('cofSection').style.display = 'none';
+                document.getElementById('paymentButtons').style.display = 'block';
             } else if (method === 'ach') {
-                // Hide card payment options and show ACH fields
                 document.getElementById('cardPaymentSection').style.display = 'none';
                 document.getElementById('saveCardLabel').style.display = 'none';
-                document.getElementById('routingFields').style.display = 'block';  // Show ACH fields
-                document.getElementById('cofSection').style.display = 'none';  // Hide COF section
-                document.getElementById('paymentButtons').style.display = 'block';  // Show submit button
+                document.getElementById('routingFields').style.display = 'block';
+                document.getElementById('cofSection').style.display = 'none';
+                document.getElementById('paymentButtons').style.display = 'block';
             }
         }
 
-        // Function to show the COF flow
         function showCofFlow() {
-            document.getElementById('cardPaymentSection').style.display = 'none';  // Hide Card section
-            document.getElementById('saveCardLabel').style.display = 'none';  // Hide Save Card checkbox
-            document.getElementById('routingFields').style.display = 'none';  // Hide ACH fields
-            document.getElementById('cofSection').style.display = 'block';  // Show COF section
-            document.getElementById('paymentButtons').style.display = 'none';  // Hide submit button
-
-            // Show options to change card or payment method
+            document.getElementById('cardPaymentSection').style.display = 'none';
+            document.getElementById('saveCardLabel').style.display = 'none';
+            document.getElementById('routingFields').style.display = 'none';
+            document.getElementById('cofSection').style.display = 'block';
+            document.getElementById('paymentButtons').style.display = 'none';
             document.getElementById('cofChangeOption').style.display = 'block';
         }
 
-        // Function to handle switching from COF flow to card or ACH
         function switchPaymentMethod(method) {
             if (method === 'card') {
                 togglePaymentMethod('card');
-                document.getElementById('cofChangeOption').style.display = 'none';  // Hide change options
+                document.getElementById('cofChangeOption').style.display = 'none';
             } else if (method === 'ach') {
                 togglePaymentMethod('ach');
-                document.getElementById('cofChangeOption').style.display = 'none';  // Hide change options
+                document.getElementById('cofChangeOption').style.display = 'none';
             }
         }
     </script>
 </head>
 <body>
     <h1>Fiserv Payment Form</h1>
-
     <form name="paymentform" id="paymentform">
         <input type="hidden" name="invoiceId" id="invoiceId" />
-
-        <!-- Payment Method Selection -->
         <div id="paymentMethodSelection">
-            <label>
-                <input type="radio" name="paymentMethod" value="card" onclick="togglePaymentMethod('card')" /> Card Payment
-            </label>
-            <label>
-                <input type="radio" name="paymentMethod" value="ach" onclick="togglePaymentMethod('ach')" /> ACH Payment
-            </label>
-            <label>
-                <input type="radio" name="paymentMethod" value="cof" onclick="showCofFlow()" /> COF Payment
-            </label>
+            <label><input type="radio" name="paymentMethod" value="card" onclick="togglePaymentMethod('card')" /> Card Payment</label>
+            <label><input type="radio" name="paymentMethod" value="ach" onclick="togglePaymentMethod('ach')" /> ACH Payment</label>
+            <label><input type="radio" name="paymentMethod" value="cof" onclick="showCofFlow()" /> COF Payment</label>
         </div>
 
-        <!-- Card Payment: Tokenization iframe and Save Card checkbox -->
         <div id="cardPaymentSection" style="display: none;">
             <iframe id="tokenFrame" name="tokenFrame" src="https://fts-uat.cardconnect.com/itoke/ajax-tokenizer.html?useexpiry=true&usecvv=true" frameborder="0" scrolling="no" width="400" height="150"></iframe>
             <br><br>
@@ -212,7 +179,6 @@
             </label>
         </div>
 
-        <!-- ACH Payment: Routing number and account number fields -->
         <div id="routingFields" style="display: none;">
             <label for="routingNumber">Routing Number:</label>
             <input type="text" id="routingNumber" name="routingNumber" required />
@@ -221,23 +187,18 @@
             <input type="text" id="accountNumber" name="accountNumber" required />
         </div>
 
-        <!-- COF Payment: Message and Confirm Payment button -->
         <div id="cofSection" style="display: none;">
             <p id="cofMessage">Your invoice amount is $100 and applicable surcharge is $3. Total transaction amount is $103.</p>
             <button type="button" onclick="submitToWebhook()">Confirm Payment</button>
         </div>
 
-        <!-- Change Payment Method Option (visible only in COF flow) -->
         <div id="cofChangeOption" style="display: none;">
             <p>Would you like to change your payment method?</p>
             <button type="button" onclick="switchPaymentMethod('card')">Card Update</button>
             <button type="button" onclick="switchPaymentMethod('ach')">ACH Payment</button>
         </div>
 
-        <!-- Hidden field to store the token -->
         <input type="hidden" name="mytoken" id="mytoken" />
-
-        <!-- Submit Button (common for card/ach) -->
         <div id="paymentButtons" style="display: none;">
             <button type="button" onclick="submitToWebhook()">Submit Payment</button>
         </div>
