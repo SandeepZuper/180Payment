@@ -149,12 +149,14 @@
                 document.getElementById('saveCardLabel').style.display = 'block';
                 document.getElementById('routingFields').style.display = 'none';  // Hide ACH fields
                 document.getElementById('cofSection').style.display = 'none';  // Hide COF section
+                document.getElementById('paymentButtons').style.display = 'block';  // Show submit button
             } else if (method === 'ach') {
                 // Hide card payment options and show ACH fields
                 document.getElementById('cardPaymentSection').style.display = 'none';
                 document.getElementById('saveCardLabel').style.display = 'none';
                 document.getElementById('routingFields').style.display = 'block';  // Show ACH fields
                 document.getElementById('cofSection').style.display = 'none';  // Hide COF section
+                document.getElementById('paymentButtons').style.display = 'block';  // Show submit button
             }
         }
 
@@ -164,31 +166,42 @@
             document.getElementById('saveCardLabel').style.display = 'none';  // Hide Save Card checkbox
             document.getElementById('routingFields').style.display = 'none';  // Hide ACH fields
             document.getElementById('cofSection').style.display = 'block';  // Show COF section
+            document.getElementById('paymentButtons').style.display = 'none';  // Hide submit button
 
-            // Update the message for COF payment
-            document.getElementById('cofMessage').innerHTML = "Your invoice amount is $100 and applicable surcharge is $3.<br/>Total transaction amount $103, Please check the button below to confirm payment.";
+            // Show options to change card or payment method
+            document.getElementById('cofChangeOption').style.display = 'block';
+        }
+
+        // Function to handle switching from COF flow to card or ACH
+        function switchPaymentMethod(method) {
+            if (method === 'card') {
+                togglePaymentMethod('card');
+                document.getElementById('cofChangeOption').style.display = 'none';  // Hide change options
+            } else if (method === 'ach') {
+                togglePaymentMethod('ach');
+                document.getElementById('cofChangeOption').style.display = 'none';  // Hide change options
+            }
         }
     </script>
 </head>
 <body>
-    <h1>Payment Method Selection</h1>
-    
-    <!-- Payment Method Selection: Radio buttons to toggle between Card and ACH -->
-    <form name="paymentForm" id="paymentForm">
-        <!-- Hidden field to store the Zuper invoice ID -->
+    <h1>Fiserv Payment Form</h1>
+
+    <form name="paymentform" id="paymentform">
         <input type="hidden" name="invoiceId" id="invoiceId" />
 
-        <!-- Radio buttons to select payment method -->
-        <label>
-            <input type="radio" name="paymentMethod" value="card" onclick="togglePaymentMethod('card')" /> Card Payment
-        </label>
-        <label>
-            <input type="radio" name="paymentMethod" value="ach" onclick="togglePaymentMethod('ach')" /> ACH Payment
-        </label>
-        <label>
-            <input type="radio" name="paymentMethod" value="cof" onclick="showCofFlow()" /> COF Payment
-        </label>
-        <br><br>
+        <!-- Payment Method Selection -->
+        <div id="paymentMethodSelection">
+            <label>
+                <input type="radio" name="paymentMethod" value="card" onclick="togglePaymentMethod('card')" /> Card Payment
+            </label>
+            <label>
+                <input type="radio" name="paymentMethod" value="ach" onclick="togglePaymentMethod('ach')" /> ACH Payment
+            </label>
+            <label>
+                <input type="radio" name="paymentMethod" value="cof" onclick="showCofFlow()" /> COF Payment
+            </label>
+        </div>
 
         <!-- Card Payment: Tokenization iframe and Save Card checkbox -->
         <div id="cardPaymentSection" style="display: none;">
@@ -210,13 +223,24 @@
 
         <!-- COF Payment: Message and Confirm Payment button -->
         <div id="cofSection" style="display: none;">
-            <p id="cofMessage"></p>
+            <p id="cofMessage">Your invoice amount is $100 and applicable surcharge is $3. Total transaction amount is $103.</p>
             <button type="button" onclick="submitToWebhook()">Confirm Payment</button>
         </div>
 
-        <br><br>
+        <!-- Change Payment Method Option (visible only in COF flow) -->
+        <div id="cofChangeOption" style="display: none;">
+            <p>Would you like to change your payment method?</p>
+            <button type="button" onclick="switchPaymentMethod('card')">Card Update</button>
+            <button type="button" onclick="switchPaymentMethod('ach')">ACH Payment</button>
+        </div>
+
         <!-- Hidden field to store the token -->
         <input type="hidden" name="mytoken" id="mytoken" />
+
+        <!-- Submit Button (common for card/ach) -->
+        <div id="paymentButtons" style="display: none;">
+            <button type="button" onclick="submitToWebhook()">Submit Payment</button>
+        </div>
     </form>
 </body>
 </html>
