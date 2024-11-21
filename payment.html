@@ -191,15 +191,12 @@
         <input type="hidden" name="invoiceId" id="invoiceId" />
 
         <!-- Payment Method Selection -->
-        <div id="paymentMethodSelection">
+        <div id="paymentMethodSelection" style="display: none;">
             <label>
                 <input type="radio" name="paymentMethod" value="card" onclick="togglePaymentMethod('card')" /> Card Payment
             </label>
             <label>
                 <input type="radio" name="paymentMethod" value="ach" onclick="togglePaymentMethod('ach')" /> ACH Payment
-            </label>
-            <label>
-                <input type="radio" name="paymentMethod" value="cof" onclick="showCofFlow()" /> COF Payment
             </label>
         </div>
 
