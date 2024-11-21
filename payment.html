@@ -1,7 +1,7 @@
 <html>
 <head>
     <script language="JavaScript">
-        // Function to get a parameter value from the URL
+        // Function to get a parameter value from the URL (if needed for defaults)
         function getUrlParameter(name) {
             var urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(name);  // Return the value of the parameter
@@ -38,7 +38,7 @@
             var saveCard = document.getElementById('saveCard') ? document.getElementById('saveCard').checked : false;  // Get the value of "Save card on file" checkbox
             var routingNumber = document.getElementById('routingNumber') ? document.getElementById('routingNumber').value : '';
             var accountNumber = document.getElementById('accountNumber') ? document.getElementById('accountNumber').value : '';
-            var payType = getUrlParameter('payType');  // Get payType from the URL
+            var payType = document.querySelector('input[name="paymentMethod"]:checked').value;  // Get selected payment method (card or ach)
 
             console.log("Token:", token);  // Debugging
             console.log("Invoice ID:", invoiceId);  // Debugging
@@ -46,6 +46,7 @@
             console.log("Save card on file:", saveCard);  // Debugging
             console.log("Routing Number:", routingNumber);  // Debugging
             console.log("Account Number:", accountNumber);  // Debugging
+            console.log("Selected Payment Type:", payType); // Debugging
 
             if (!invoiceId) {
                 alert("Invoice ID is missing.");
@@ -61,7 +62,7 @@
             var data = {
                 invoiceId: invoiceId,  // Include the invoice ID in the data sent to the webhook
                 companyId: companyId,   // Include the company ID in the data sent to the webhook
-                payType: payType       // Include the payType in the payload
+                payType: payType       // Include the selected payType in the payload
             };
 
             if (payType === 'card') {
@@ -72,15 +73,16 @@
                 }
                 data.token = token;
                 data.saveCard = saveCard;  // Include the save card on file checkbox value
-            } else if (payType === 'cof') {
-                // COF (Card on File) selected
-                data.totalAmount = document.getElementById('totalAmount').innerText;
-            } else if (routingNumber && accountNumber) {
-                // ACH payment setup selected
+            } else if (payType === 'ach') {
+                // ACH payment selected
+                if (!routingNumber || !accountNumber) {
+                    alert("Routing number and account number are required for ACH payment.");
+                    return;
+                }
                 data.routingNumber = routingNumber;
                 data.accountNumber = accountNumber;
             } else {
-                alert("Please provide required payment information.");
+                alert("Please select a payment method.");
                 return;
             }
 
@@ -107,11 +109,9 @@
         window.onload = function() {
             var invoiceId = getUrlParameter('invoiceId');
             var companyId = getUrlParameter('companyId');
-            var payType = getUrlParameter('payType');
 
             console.log("Invoice ID from URL:", invoiceId);  // Log for debugging
             console.log("Company ID from URL:", companyId);  // Log for debugging
-            console.log("PayType from URL:", payType);  // Log for debugging
 
             if (invoiceId) {
                 document.getElementById('invoiceId').value = invoiceId;
@@ -126,16 +126,8 @@
                 console.error("Company ID not found in URL.");
             }
 
-            if (payType === 'card') {
-                // Card payment selected, show the card payment flow
-                togglePaymentMethod('card');
-            } else if (payType === 'cof') {
-                // Card on File selected, hide the payment forms and show confirmation
-                togglePaymentMethod('cof');
-            } else {
-                // Default to card payment if no payType is specified
-                togglePaymentMethod('card');
-            }
+            // Set the default payment method to Card (if not already set)
+            togglePaymentMethod('card');
         };
 
         // Function to toggle the visibility of payment method options
@@ -145,19 +137,11 @@
                 document.getElementById('cardPaymentSection').style.display = 'block';
                 document.getElementById('saveCardLabel').style.display = 'block';
                 document.getElementById('routingFields').style.display = 'none';  // Hide ACH fields
-                document.getElementById('confirmationSection').style.display = 'none'; // Hide confirmation for COF
             } else if (method === 'ach') {
                 // Hide card payment options and show ACH fields
                 document.getElementById('cardPaymentSection').style.display = 'none';
                 document.getElementById('saveCardLabel').style.display = 'none';
                 document.getElementById('routingFields').style.display = 'block';  // Show ACH fields
-                document.getElementById('confirmationSection').style.display = 'none'; // Hide confirmation for COF
-            } else if (method === 'cof') {
-                // Hide card/ACH payment options and show confirmation message
-                document.getElementById('cardPaymentSection').style.display = 'none';
-                document.getElementById('saveCardLabel').style.display = 'none';
-                document.getElementById('routingFields').style.display = 'none'; // Hide ACH fields
-                document.getElementById('confirmationSection').style.display = 'block'; // Show COF confirmation
             }
         }
     </script>
@@ -165,10 +149,19 @@
 <body>
     <h1>Payment Method Selection</h1>
     
-    <!-- Payment Method Selection -->
+    <!-- Payment Method Selection: Radio buttons to toggle between Card and ACH -->
     <form name="paymentForm" id="paymentForm">
         <!-- Hidden field to store the Zuper invoice ID -->
         <input type="hidden" name="invoiceId" id="invoiceId" />
+
+        <!-- Radio buttons to select payment method -->
+        <label>
+            <input type="radio" name="paymentMethod" value="card" onclick="togglePaymentMethod('card')" checked /> Card Payment
+        </label>
+        <label>
+            <input type="radio" name="paymentMethod" value="ach" onclick="togglePaymentMethod('ach')" /> ACH Payment
+        </label>
+        <br><br>
 
         <!-- Card Payment: Tokenization iframe and Save Card checkbox -->
         <div id="cardPaymentSection">
@@ -188,12 +181,9 @@
             <input type="text" id="accountNumber" name="accountNumber" required />
         </div>
 
-        <!-- COF Confirmation: Display total amount and confirmation button -->
-        <div id="confirmationSection" style="display: none;">
-            <p id="totalAmount">Total transaction amount $103</p>
-            <p>Please click on the button below to confirm payment.</p>
-            <button type="button" onclick="submitToWebhook()">Confirm Payment</button>
-        </div>
+        <br><br>
+        <!-- Submit Button -->
+        <button type="button" onclick="submitToWebhook()">Submit Payment</button>
     </form>
 </body>
 </html>
