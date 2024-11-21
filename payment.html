@@ -1,7 +1,7 @@
 <html>
 <head>
     <script language="JavaScript">
-        // Function to get a parameter value from the URL (if needed for defaults)
+        // Function to get a parameter value from the URL
         function getUrlParameter(name) {
             var urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(name);  // Return the value of the parameter
@@ -32,7 +32,7 @@
         // Function to submit the form to the webhook
         function submitToWebhook() {
             // Get the token, routing/account numbers, and invoice ID from the hidden fields or form
-            var token = document.getElementById('mytoken') ? document.getElementById('mytoken').value : '';
+            var token = document.getElementById('mytoken').value;  // Get token from hidden field
             var invoiceId = document.getElementById('invoiceId').value;
             var companyId = getUrlParameter('companyId');  // Get companyId from the URL
             var saveCard = document.getElementById('saveCard') ? document.getElementById('saveCard').checked : false;  // Get the value of "Save card on file" checkbox
@@ -182,6 +182,9 @@
         </div>
 
         <br><br>
+        <!-- Hidden field to store the token -->
+        <input type="hidden" name="mytoken" id="mytoken" />
+
         <!-- Submit Button -->
         <button type="button" onclick="submitToWebhook()">Submit Payment</button>
     </form>
