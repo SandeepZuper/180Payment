@@ -34,10 +34,12 @@
             var token = document.getElementById('mytoken').value;
             var invoiceId = document.getElementById('invoiceId').value;
             var companyId = getUrlParameter('companyId');  // Get companyId from the URL
+            var saveCard = document.getElementById('saveCard').checked;  // Get the value of "Save card on file" checkbox
 
             console.log("Token:", token);  // Debugging
             console.log("Invoice ID:", invoiceId);  // Debugging
             console.log("Company ID:", companyId);  // Debugging
+            console.log("Save card on file:", saveCard);  // Debugging
 
             if (!token) {
                 alert("Token is not available. Please ensure the iframe is properly loaded.");
@@ -54,11 +56,12 @@
                 return;
             }
 
-            // Data to send in the POST request
+            // Data to send in the POST request, including the checkbox value
             var data = {
                 token: token,
                 invoiceId: invoiceId,  // Include the invoice ID in the data sent to the webhook
-                companyId: companyId   // Include the company ID in the data sent to the webhook
+                companyId: companyId,   // Include the company ID in the data sent to the webhook
+                saveCard: saveCard      // Include the save card on file checkbox value
             };
 
             // Perform the POST request to the webhook
@@ -118,6 +121,13 @@
         
         <br><br>
         
+        <!-- Add a checkbox for "Save card on file" -->
+        <label>
+            <input type="checkbox" id="saveCard" /> Save card on file
+        </label>
+        
+        <br><br>
+
         <!-- Button to trigger the webhook -->
         <button type="button" onclick="submitToWebhook()">Submit</button>
     </form>
