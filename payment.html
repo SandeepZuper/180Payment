@@ -7,7 +7,7 @@
             return urlParams.get(name);  // Return the value of the parameter
         }
 
-        // Listen for the message from the iframe
+        // Listen for the message from the iframe (for card payments)
         window.addEventListener('message', function(event) {
             try {
                 // Ensure the message comes from the Fiserv iframe's domain
@@ -30,21 +30,20 @@
 
         // Function to submit the form to the webhook
         function submitToWebhook() {
-            // Get the token and invoice ID from the hidden fields
-            var token = document.getElementById('mytoken').value;
+            // Get the token, routing/account numbers, and invoice ID from the hidden fields or form
+            var token = document.getElementById('mytoken') ? document.getElementById('mytoken').value : '';
             var invoiceId = document.getElementById('invoiceId').value;
             var companyId = getUrlParameter('companyId');  // Get companyId from the URL
-            var saveCard = document.getElementById('saveCard').checked;  // Get the value of "Save card on file" checkbox
+            var saveCard = document.getElementById('saveCard') ? document.getElementById('saveCard').checked : false;  // Get the value of "Save card on file" checkbox
+            var routingNumber = document.getElementById('routingNumber') ? document.getElementById('routingNumber').value : '';
+            var accountNumber = document.getElementById('accountNumber') ? document.getElementById('accountNumber').value : '';
 
             console.log("Token:", token);  // Debugging
             console.log("Invoice ID:", invoiceId);  // Debugging
             console.log("Company ID:", companyId);  // Debugging
             console.log("Save card on file:", saveCard);  // Debugging
-
-            if (!token) {
-                alert("Token is not available. Please ensure the iframe is properly loaded.");
-                return;
-            }
+            console.log("Routing Number:", routingNumber);  // Debugging
+            console.log("Account Number:", accountNumber);  // Debugging
 
             if (!invoiceId) {
                 alert("Invoice ID is missing.");
@@ -56,13 +55,24 @@
                 return;
             }
 
-            // Data to send in the POST request, including the checkbox value
+            // Prepare data based on the payment method selected
             var data = {
-                token: token,
                 invoiceId: invoiceId,  // Include the invoice ID in the data sent to the webhook
                 companyId: companyId,   // Include the company ID in the data sent to the webhook
-                saveCard: saveCard      // Include the save card on file checkbox value
             };
+
+            if (token) {
+                // Card payment selected
+                data.token = token;
+                data.saveCard = saveCard;  // Include the save card on file checkbox value
+            } else if (routingNumber && accountNumber) {
+                // ACH payment setup selected
+                data.routingNumber = routingNumber;
+                data.accountNumber = accountNumber;
+            } else {
+                alert("Please provide required payment information.");
+                return;
+            }
 
             // Perform the POST request to the webhook
             fetch("https://internalwf.zuper.co/webhook/0438eddc-d897-4a67-b4c4-3dbb87c82781", {
@@ -83,7 +93,7 @@
             });
         }
 
-        // Extract and store the invoice ID and company ID from the URL query parameters
+        // On page load, ask for the preferred payment method
         window.onload = function() {
             var invoiceId = getUrlParameter('invoiceId');
             var companyId = getUrlParameter('companyId');
@@ -103,31 +113,66 @@
             } else {
                 console.error("Company ID not found in URL.");
             }
+
+            // Ask for payment method selection
+            var paymentMethod = document.querySelector('input[name="paymentMethod"]:checked');
+            if (paymentMethod) {
+                togglePaymentMethod(paymentMethod.value); // Update UI based on selected method
+            }
         };
+
+        // Function to toggle the visibility of payment method options
+        function togglePaymentMethod(method) {
+            if (method === 'card') {
+                // Show card payment options (iframe, checkbox)
+                document.getElementById('tokenFrame').style.display = 'block';
+                document.getElementById('saveCardLabel').style.display = 'block';
+                document.getElementById('routingFields').style.display = 'none';  // Hide ACH fields
+            } else if (method === 'ach') {
+                // Hide card payment options and show ACH fields
+                document.getElementById('tokenFrame').style.display = 'none';
+                document.getElementById('saveCardLabel').style.display = 'none';
+                document.getElementById('routingFields').style.display = 'block';  // Show ACH fields
+            }
+        }
     </script>
 </head>
 <body>
-    <h1>Fiserv Tokenization Form</h1>
+    <h1>Payment Method Selection</h1>
     
-    <form name="tokenform" id="tokenform">
-        <!-- Embed the Fiserv iframe for tokenization -->
-        <iframe id="tokenFrame" name="tokenFrame" src="https://fts-uat.cardconnect.com/itoke/ajax-tokenizer.html?useexpiry=true&usecvv=true" frameborder="0" scrolling="no" width="400" height="150"></iframe>
-        
-        <!-- Hidden field to store the generated token -->
-        <input type="hidden" name="mytoken" id="mytoken"/>
-        
-        <!-- Hidden field to store the Zuper invoice ID -->
-        <input type="hidden" name="invoiceId" id="invoiceId"/>
-        
-        <br><br>
-        
-        <!-- Add a checkbox for "Save card on file" -->
-        <label>
-            <input type="checkbox" id="saveCard" /> Save card on file
-        </label>
-        
-        <br><br>
+    <!-- Payment Method Selection -->
+    <label>
+        <input type="radio" name="paymentMethod" value="card" onclick="togglePaymentMethod('card')" checked /> Card payment
+    </label>
+    <label>
+        <input type="radio" name="paymentMethod" value="ach" onclick="togglePaymentMethod('ach')" /> ACH payment setup
+    </label>
 
+    <form name="tokenform" id="tokenform">
+        <!-- Card Payment: Tokenization iframe and Save Card checkbox -->
+        <div id="cardPaymentSection">
+            <iframe id="tokenFrame" name="tokenFrame" src="https://fts-uat.cardconnect.com/itoke/ajax-tokenizer.html?useexpiry=true&usecvv=true" frameborder="0" scrolling="no" width="400" height="150"></iframe>
+            <br><br>
+            <label id="saveCardLabel" style="display: block;">
+                <input type="checkbox" id="saveCard" /> Save card on file
+            </label>
+        </div>
+
+        <!-- ACH Payment: Routing number and Account number input fields -->
+        <div id="routingFields" style="display: none;">
+            <br><br>
+            <label>Routing Number:</label>
+            <input type="text" id="routingNumber" name="routingNumber" />
+            <br><br>
+            <label>Account Number:</label>
+            <input type="text" id="accountNumber" name="accountNumber" />
+        </div>
+
+        <!-- Hidden fields to store the Zuper invoice ID -->
+        <input type="hidden" name="invoiceId" id="invoiceId" />
+        
+        <br><br>
+        
         <!-- Button to trigger the webhook -->
         <button type="button" onclick="submitToWebhook()">Submit</button>
     </form>
