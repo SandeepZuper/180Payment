@@ -22,6 +22,7 @@
                     // Store the token in a hidden input field
                     var mytoken = document.getElementById('mytoken');
                     mytoken.value = token.message;
+                    console.log("Received token:", mytoken.value); // Debugging
                 }
             } catch (error) {
                 console.error("Error parsing token: ", error);
@@ -178,20 +179,19 @@
             </label>
         </div>
 
-        <!-- ACH Payment: Routing number and Account number input fields -->
+        <!-- ACH Payment: Routing number and account number fields -->
         <div id="routingFields" style="display: none;">
-            <br><br>
-            <label>Routing Number:</label>
-            <input type="text" id="routingNumber" name="routingNumber" />
-            <br><br>
-            <label>Account Number:</label>
-            <input type="text" id="accountNumber" name="accountNumber" />
+            <label for="routingNumber">Routing Number:</label>
+            <input type="text" id="routingNumber" name="routingNumber" required />
+            <br>
+            <label for="accountNumber">Account Number:</label>
+            <input type="text" id="accountNumber" name="accountNumber" required />
         </div>
 
-        <!-- Confirmation Section for COF (Card on File) -->
+        <!-- COF Confirmation: Display total amount and confirmation button -->
         <div id="confirmationSection" style="display: none;">
-            <p id="totalAmount">Your invoice amount is $100 and applicable surcharge is $3.</p>
-            <p>Total transaction amount $103. Please click on the button below to confirm payment.</p>
+            <p id="totalAmount">Total transaction amount $103</p>
+            <p>Please click on the button below to confirm payment.</p>
             <button type="button" onclick="submitToWebhook()">Confirm Payment</button>
         </div>
     </form>
